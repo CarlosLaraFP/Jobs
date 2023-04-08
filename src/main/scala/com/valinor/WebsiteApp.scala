@@ -1,7 +1,7 @@
 package com.valinor
 
+import com.valinor.jobs._
 import zio._
-//import zio.json._
 import zio.http._
 import zio.http.model.Method
 import java.nio.charset.Charset
@@ -21,7 +21,10 @@ object WebsiteApp extends ZIOAppDefault {
     case req@ Method.POST -> !! / route => {
       for {
         request <- req.body.asString(Charset.defaultCharset())
-      } yield Response.text(request)
+        createJobRequest <- CreateJobRequest.deserialize(request)
+        validated <- Job.createFromRequest(createJobRequest)
+        job <- ZIO.fromEither(validated.toEither)
+      } yield Response.text(job.title.toString)
     }.catchAll { e =>
       ZIO.succeed {
         Response.text(e.getMessage)
