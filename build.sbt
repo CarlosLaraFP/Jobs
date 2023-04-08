@@ -13,6 +13,7 @@ lazy val calibanVersion = "2.0.2"
 lazy val doobieVersion = "1.0.0-RC1"
 
 libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-prelude" % "1.0.0-RC18",
   "dev.zio" %% "zio-http" % "0.0.5",
   "dev.zio" %% "zio" % zioVersion,
   "dev.zio" %% "zio-test" % zioVersion,
