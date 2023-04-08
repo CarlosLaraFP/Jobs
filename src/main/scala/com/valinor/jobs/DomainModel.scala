@@ -62,32 +62,37 @@ final case class Job private (
 object Job {
   def createFromRequest(request: CreateJobRequest): UIO[Validation[CreateJobRequestError, Job]] =
     ZIO.succeed {
-      val job = Job(
-        JobId(UUID.randomUUID),
-        JobTitle(request.title),
-        JobDescription(request.description),
-        CompanyName(request.companyName),
-        CompanySize.getCategory(request.companySize),
-        JobStatus.Created,
-        HourlyRate(request.hourlyRate),
-        Created(Instant.now),
-        JobStatusChanged(Instant.now)
-      )
-
-      //Validation.validateWith()
+      Validation.validateWith(
+        validateJobTitle(request.title),
+        validateJobDescription(request.description),
+        validateCompanyName(request.companyName)
+      )(createJob)
     }
 
-  def validateJobTitle(title: String): Validation[String, JobTitle] =
-    if (title.isEmpty) Validation.fail("Job title must not be empty")
+  def createJob(jobTitle: JobTitle, jobDescription: JobDescription, companyName: CompanyName): Job =
+    Job(
+      JobId(UUID.randomUUID),
+      jobTitle,
+      jobDescription,
+      companyName,
+      CompanySize.getCategory(request.companySize),
+      JobStatus.Created,
+      HourlyRate(request.hourlyRate),
+      Created(Instant.now),
+      JobStatusChanged(Instant.now)
+    )
+
+  def validateJobTitle(title: String): Validation[CreateJobRequestError, JobTitle] =
+    if (title.isEmpty) Validation.fail(CreateJobRequestError(List("Job title must not be empty")))
     else Validation.succeed(JobTitle(title))
 
-  def validateJobDescription(description: Option[String]): Validation[String, JobDescription] =
+  def validateJobDescription(description: Option[String]): Validation[CreateJobRequestError, JobDescription] =
     if (description.nonEmpty && description.get.length > 250)
-      Validation.fail("Job description must not exceed 250 characters")
+      Validation.fail(CreateJobRequestError(List("Job description must not exceed 250 characters")))
     else Validation.succeed(JobDescription(description))
 
-  def validateCompanyName(name: String): Validation[String, CompanyName] =
-    if (name.isEmpty) Validation.fail("Company name must not be empty")
+  def validateCompanyName(name: String): Validation[CreateJobRequestError, CompanyName] =
+    if (name.isEmpty) Validation.fail(CreateJobRequestError(List("Company name must not be empty")))
     else Validation.succeed(CompanyName(name))
 
 }
