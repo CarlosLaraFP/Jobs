@@ -1,6 +1,7 @@
 package com.valinor.jobs
 
 import zio.prelude.{Associative, Newtype, Subtype, Validation}
+//import zio.prelude.Assertion._ // for compile-time validation
 import java.time.Instant
 import java.util.UUID
 /*

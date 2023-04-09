@@ -29,7 +29,7 @@ import java.nio.charset.Charset
   between microservices in a complex business domain.
 */
 
-case class CreateJobRequest private (
+final case class CreateJobRequest private (
   title: String,
   description: Option[String],
   hourlyRate: Double,
@@ -73,6 +73,7 @@ sealed abstract case class Job private (
 object Job {
   // TODO: Property-based tests
   def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
+    // Run-time validation with error accumulation
     Validation.validateWith(
       JobTitle.validate(request.title),
       JobDescription.validate(request.description),
