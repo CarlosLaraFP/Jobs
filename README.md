@@ -1,4 +1,5 @@
-# Website
+# Scala Jobs Online Marketplace
+
 Full-stack functional programming with ZIO (backend) and Laminar (frontend).
 
 Currently creating a Scala microservice for managing "jobs" in an online marketplace (create, list, update, and delete jobs).
