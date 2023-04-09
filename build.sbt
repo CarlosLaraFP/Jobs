@@ -7,9 +7,7 @@ lazy val root = (project in file("."))
     name := "Website"
   )
 
-lazy val catsVersion = "2.9.0"
 lazy val zioVersion = "2.0.10"
-lazy val calibanVersion = "2.0.2"
 lazy val doobieVersion = "1.0.0-RC1"
 
 libraryDependencies ++= Seq(

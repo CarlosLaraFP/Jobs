@@ -3,6 +3,8 @@ Full-stack functional programming with ZIO (backend) and Laminar (frontend).
 
 Currently creating a Scala microservice for managing "jobs" in an online marketplace (create, list, update, and delete jobs).
 
+See below once we implement Doobie:
+
 # PostgreSQL Setup
 
 Before running WebsiteApp or WebsiteSpec, please run these commands to set up PostgreSQL locally (Mac terminal):
