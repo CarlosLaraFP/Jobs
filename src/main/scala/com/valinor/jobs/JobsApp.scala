@@ -1,14 +1,12 @@
-package com.valinor
+package com.valinor.jobs
 
-import com.valinor.jobs._
+import Newtypes._
 import zio._
 import zio.http._
 import zio.http.model.Method
-import java.nio.charset.Charset
-import Newtypes._
 
 
-object WebsiteApp extends ZIOAppDefault {
+object JobsApp extends ZIOAppDefault {
   /*
     ZIO HTTP handles each incoming request in its own Fiber out-of-the-box.
     HttpApp is a type alias for Http[-R, +E, Request, Response]

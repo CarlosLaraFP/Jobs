@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="Website">
+    <profile name="sbt 1" modules="Valinor,Website">
       <option name="higherKinds" value="true" />
       <option name="explainTypeErrors" value="true" />
       <parameters>

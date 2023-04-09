@@ -7,7 +7,7 @@ import zio.test._
 import java.util.UUID
 
 
-object WebsiteSpec extends ZIOSpecDefault {
+object JobSpec extends ZIOSpecDefault {
 
   // TODO: Unit tests
 
