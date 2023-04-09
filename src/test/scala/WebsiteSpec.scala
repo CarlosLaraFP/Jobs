@@ -1,4 +1,5 @@
-//import com.valinor._
+import com.valinor.jobs._
+import com.valinor.jobs.Newtypes._
 
 import zio._
 import zio.test.TestAspect._
@@ -9,6 +10,7 @@ import java.util.UUID
 object WebsiteSpec extends ZIOSpecDefault {
 
   // TODO: Unit tests
+
 /*
   val deleteTableTest: Spec[DatabaseService, RequestError] =
     test("databaseService.modifyTable with Delete") {
