@@ -1,20 +1,9 @@
 # Website
-Source code for Valinor website
+Source code for Scala jobs marketplace website.
 
 Full-stack functional programming with ZIO (backend) and Laminar (frontend).
 
-Create a Scala service for managing "jobs". It should be possible to create, list, update, and delete jobs.
-
-A job has a unique id (your choice on ID generation and representation), title, optional description, status, created timestamp, and status change timestamp.
-
-When a job status changes, an appropriate message should be published by the API to some "external" service. (This service can be mocked). Assume that this publish service is flaky, and that publishing may need to be retried.
-
-Additional requirements:
-
-* The application should be wired up using ZIO layers.
-* The backing server should be ZIO HTTP.
-* The cases should be stored in PostgreSQL.
-* Some amount of unit or integration testing (whatever is your preferred style) should be implemented.
+Creating a Scala microservice for managing "jobs". It should be possible to create, list, update, and delete jobs.
 
 # PostgreSQL Setup
 

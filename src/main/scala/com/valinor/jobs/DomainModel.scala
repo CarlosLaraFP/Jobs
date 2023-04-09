@@ -2,7 +2,7 @@ package com.valinor.jobs
 
 import zio._
 import zio.json._
-import zio.prelude.{Associative, Newtype, Validation}
+import zio.prelude.{Subtype, Validation}
 
 import java.time.Instant
 import java.util.UUID
@@ -50,12 +50,6 @@ final case class Job private (
 }
 object Job {
   type RequestValidation[T] = Validation[PostRequestError, T]
-
-  implicit val IntAssociative: Associative[PostRequestError] =
-    new Associative[PostRequestError] {
-      def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError =
-        PostRequestError(s"${PostRequestError.unwrap(left)} | ${PostRequestError.unwrap(right)}")
-    }
 
   def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
     Validation.validateWith(

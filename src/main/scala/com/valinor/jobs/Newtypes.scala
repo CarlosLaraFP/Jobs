@@ -1,6 +1,7 @@
 package com.valinor.jobs
 
-import zio.prelude.Newtype
+import zio.prelude.{Associative, Newtype, Subtype}
+
 import java.time.Instant
 import java.util.UUID
 /*
@@ -8,7 +9,14 @@ import java.util.UUID
   as another type at runtime but is a separate type at compile time.
 */
 object Newtypes {
-  object PostRequestError extends Newtype[String]
+  object PostRequestError extends Subtype[String] {
+    implicit val PostRequestErrorAssociative: Associative[PostRequestError] =
+      new Associative[PostRequestError] {
+        def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError = {
+          PostRequestError(s"$left | $right")
+        }
+      }
+  }
   type PostRequestError = PostRequestError.Type
   object JobId extends Newtype[UUID]
   type JobId = JobId.Type

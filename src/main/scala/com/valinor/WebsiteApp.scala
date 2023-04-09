@@ -25,9 +25,7 @@ object WebsiteApp extends ZIOAppDefault {
         job <- Job.createFromRequest(createJobRequest)
       } yield Response.text(job.toString)
     } catchAll {
-      e: PostRequestError => ZIO.succeed {
-        Response.text(PostRequestError.unwrap(e))
-      }
+      e: PostRequestError => ZIO.succeed(Response.text(e))
     }
 
     case Method.GET -> !! / route =>
