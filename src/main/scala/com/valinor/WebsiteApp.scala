@@ -5,6 +5,7 @@ import zio._
 import zio.http._
 import zio.http.model.Method
 import java.nio.charset.Charset
+import Newtypes._
 
 
 object WebsiteApp extends ZIOAppDefault {
@@ -12,7 +13,7 @@ object WebsiteApp extends ZIOAppDefault {
     ZIO HTTP handles each incoming request in its own Fiber out-of-the-box.
     HttpApp is a type alias for Http[-R, +E, Request, Response]
     curl -i http://localhost:8080/jobs
-    curl -X POST http://localhost:8080/jobs -d '{"Name":"Scala Backend Engineer"}'
+    curl -X POST http://localhost:8080/jobs -d '{"title":"Scala Backend Engineer","hourlyRate":18.50,"companyName":"TrueBlue","companySize":1150}'
   */
   private val route = "jobs"
 
@@ -20,14 +21,13 @@ object WebsiteApp extends ZIOAppDefault {
 
     case req@ Method.POST -> !! / route => {
       for {
-        request <- req.body.asString(Charset.defaultCharset())
-        createJobRequest <- CreateJobRequest.deserialize(request)
+        createJobRequest <- CreateJobRequest.deserialize(req)
         validated <- Job.createFromRequest(createJobRequest)
         job <- ZIO.fromEither(validated.toEither)
-      } yield Response.text(job.title.toString)
-    }.catchAll { e =>
-      ZIO.succeed {
-        Response.text(e.getMessage)
+      } yield Response.text(job.toString)
+    } catchAll {
+      e: NonEmptyChunk[PostRequestError] => ZIO.succeed {
+        Response.text(e.mkString(" | "))
       }
     }
 
