@@ -23,9 +23,6 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-json" % "0.4.2",
   "dev.zio" %% "zio-config" % "3.0.7",
   "dev.zio" %% "zio-interop-cats" % "23.0.0.0",
-  "org.typelevel" %% "cats-core" % catsVersion,
-  "com.github.ghostdogpr" %% "caliban" % calibanVersion,
-  "com.github.ghostdogpr" %% "caliban-zio-http" % calibanVersion,
   "org.tpolecat" %% "doobie-core" % doobieVersion,
   "org.tpolecat" %% "doobie-postgres" % doobieVersion,
   "org.tpolecat" %% "doobie-hikari" % doobieVersion

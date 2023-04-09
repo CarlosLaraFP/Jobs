@@ -1,9 +1,7 @@
 # Website
-Source code for Scala jobs marketplace website.
-
 Full-stack functional programming with ZIO (backend) and Laminar (frontend).
 
-Creating a Scala microservice for managing "jobs". It should be possible to create, list, update, and delete jobs.
+Currently creating a Scala microservice for managing "jobs" in an online marketplace (create, list, update, and delete jobs).
 
 # PostgreSQL Setup
 
