@@ -22,12 +22,11 @@ object WebsiteApp extends ZIOAppDefault {
     case req@ Method.POST -> !! / route => {
       for {
         createJobRequest <- CreateJobRequest.deserialize(req)
-        validated <- Job.createFromRequest(createJobRequest)
-        job <- ZIO.fromEither(validated.toEither)
+        job <- Job.createFromRequest(createJobRequest)
       } yield Response.text(job.toString)
     } catchAll {
-      e: NonEmptyChunk[PostRequestError] => ZIO.succeed {
-        Response.text(e.mkString(" | "))
+      e: PostRequestError => ZIO.succeed {
+        Response.text(PostRequestError.unwrap(e))
       }
     }
 

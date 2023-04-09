@@ -2,7 +2,7 @@ package com.valinor.jobs
 
 import zio._
 import zio.json._
-import zio.prelude.{Newtype, Validation}
+import zio.prelude.{Associative, Newtype, Validation}
 
 import java.time.Instant
 import java.util.UUID
@@ -23,14 +23,14 @@ final case class CreateJobRequest(
 object CreateJobRequest {
   implicit val decoder: JsonDecoder[CreateJobRequest] = DeriveJsonDecoder.gen[CreateJobRequest]
 
-  def deserialize(request: Request): IO[NonEmptyChunk[PostRequestError], CreateJobRequest] = {
+  def deserialize(request: Request): IO[PostRequestError, CreateJobRequest] = {
     for {
       req <- request.body.asString(Charset.defaultCharset())
       createJobRequest <- ZIO.fromEither { req.fromJson[CreateJobRequest] }
     } yield createJobRequest
   }.mapError {
-    case t: Throwable => NonEmptyChunk(PostRequestError(t.getMessage))
-    case e: String => NonEmptyChunk(PostRequestError(e))
+    case t: Throwable => PostRequestError(t.getMessage)
+    case e: String => PostRequestError(e)
   }
 }
 
@@ -50,16 +50,22 @@ final case class Job private (
 }
 object Job {
   type RequestValidation[T] = Validation[PostRequestError, T]
-  def createFromRequest(request: CreateJobRequest): UIO[RequestValidation[Job]] =
-    ZIO.succeed {
-      Validation.validateWith(
-        validateJobTitle(request.title),
-        validateJobDescription(request.description),
-        validateCompanyName(request.companyName),
-        validateCompanySize(request.companySize),
-        validateHourlyRate(request.hourlyRate)
-      )(createJob)
+
+  implicit val IntAssociative: Associative[PostRequestError] =
+    new Associative[PostRequestError] {
+      def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError =
+        PostRequestError(s"${PostRequestError.unwrap(left)} | ${PostRequestError.unwrap(right)}")
     }
+
+  def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
+    Validation.validateWith(
+      validateJobTitle(request.title),
+      validateJobDescription(request.description),
+      validateCompanyName(request.companyName),
+      validateCompanySize(request.companySize),
+      validateHourlyRate(request.hourlyRate)
+    )(createJob)
+  }.toZIOAssociative
 
   def createJob(
     jobTitle: JobTitle,

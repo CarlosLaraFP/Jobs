@@ -3,7 +3,6 @@ package com.valinor.jobs
 import zio.prelude.Newtype
 import java.time.Instant
 import java.util.UUID
-
 /*
   A new type in ZIO Prelude is a type that has the same underlying representation
   as another type at runtime but is a separate type at compile time.
