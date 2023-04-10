@@ -16,7 +16,7 @@ See below once we implement Doobie:
 
 # PostgreSQL Setup
 
-Before running WebsiteApp or WebsiteSpec, please run these commands to set up PostgreSQL locally (Mac terminal):
+Before running JobsApp or JobSpec, please run these commands to set up PostgreSQL locally (Mac terminal):
 
 1. /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 2. brew install postgresql
