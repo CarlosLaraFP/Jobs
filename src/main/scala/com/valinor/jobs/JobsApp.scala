@@ -1,6 +1,6 @@
 package com.valinor.jobs
 
-import Newtypes._
+import JobTypes._
 import zio._
 import zio.http._
 import zio.http.model.Method

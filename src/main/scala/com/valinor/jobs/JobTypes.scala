@@ -8,7 +8,7 @@ import java.util.UUID
   A new type in ZIO Prelude is a type that has the same underlying representation
   as another type at runtime but is a separate type at compile time.
 */
-object Newtypes {
+object JobTypes {
   type RequestValidation[T] = Validation[PostRequestError, T]
 
   object PostRequestError extends Subtype[String] {

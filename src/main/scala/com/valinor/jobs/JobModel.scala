@@ -1,6 +1,6 @@
 package com.valinor.jobs
 
-import Newtypes._
+import JobTypes._
 import zio.prelude.Validation
 import zio._
 import zio.json._

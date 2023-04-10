@@ -1,5 +1,5 @@
 import com.valinor.jobs._
-import com.valinor.jobs.Newtypes._
+import com.valinor.jobs.JobTypes._
 
 import zio._
 import zio.test.TestAspect._

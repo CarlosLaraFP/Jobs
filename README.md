@@ -4,6 +4,14 @@ Full-stack functional programming with ZIO (backend) and Laminar (frontend).
 
 Currently creating a Scala microservice for managing "jobs" in an online marketplace (create, list, update, and delete jobs).
 
+# TODO:
+
+* Property-based testing
+* Dependency injection with ZLayers
+* Doobie for PostgreSQL DB layer
+* Remaining HTTP methods
+* Laminar frontend
+
 See below once we implement Doobie:
 
 # PostgreSQL Setup
