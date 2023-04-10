@@ -34,9 +34,7 @@ object JobsApp extends ZIOAppDefault {
         response <- jobService.jobsResponse(jobs)
       } yield response
     } catchAll {
-      e: GetRequestError => ZIO.succeed {
-        Response.text(e)
-      }
+      e: GetRequestError => ZIO.succeed(Response.text(e))
     }
 
     case _ => ZIO.succeed {
@@ -50,9 +48,7 @@ object JobsApp extends ZIOAppDefault {
       _ <- Server
         .serve(app)
         .provide(
-          Server.live(
-            ServerConfig.default // port 8080 by default
-          ),
+          Server.live(ServerConfig.default), // port 8080 by default
           JobService.live,
           DatabaseService.live,
           ZLayer.Debug.mermaid

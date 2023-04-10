@@ -8,7 +8,6 @@ Currently creating a Scala microservice for managing "jobs" in an online marketp
 
 * More extensive coverage of ZIO Prelude (such as ZPure and other functional data types & abstractions)
 * Property-based testing
-* Dependency injection with ZLayers
 * Doobie for PostgreSQL DB layer
 * Remaining HTTP methods
 * Laminar frontend

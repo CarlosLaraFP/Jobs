@@ -12,16 +12,16 @@ import java.util.UUID
 object JobTypes {
   import ErrorTypes._
 
-  object JobId extends Subtype[UUID] {
+  object JobId extends Newtype[UUID] {
     implicit val encoder: JsonEncoder[JobId] = JsonEncoder[String].contramap {
-      (id: JobId) => id.toString
+      (id: JobId) => unwrap(id).toString
     }
   }
   type JobId = JobId.Type
 
-  object JobTitle extends Subtype[String] {
+  object JobTitle extends Newtype[String] {
     implicit val encoder: JsonEncoder[JobTitle] = JsonEncoder[String].contramap {
-      (title: JobTitle) => title
+      (title: JobTitle) => unwrap(title)
     }
     def validate(title: String): RequestValidation[JobTitle] =
       if (title.isEmpty) Validation.fail(PostRequestError("Job title must not be empty"))
@@ -29,9 +29,9 @@ object JobTypes {
   }
   type JobTitle = JobTitle.Type
 
-  object JobDescription extends Subtype[Option[String]] {
+  object JobDescription extends Newtype[Option[String]] {
     implicit val encoder: JsonEncoder[JobDescription] = JsonEncoder[Option[String]].contramap {
-      (description: JobDescription) => description
+      (description: JobDescription) => unwrap(description)
     }
     def validate(description: Option[String]): RequestValidation[JobDescription] =
       if (description.nonEmpty && description.get.length > 250)
@@ -40,9 +40,9 @@ object JobTypes {
   }
   type JobDescription = JobDescription.Type
 
-  object HourlyRate extends Subtype[Double] {
+  object HourlyRate extends Newtype[Double] {
     implicit val encoder: JsonEncoder[HourlyRate] = JsonEncoder[Double].contramap {
-      (rate: HourlyRate) => rate
+      (rate: HourlyRate) => unwrap(rate)
     }
     def validate(rate: Double): RequestValidation[HourlyRate] =
       if (rate <= 7.25) Validation.fail(PostRequestError("Hourly rate must be greater than $7.25 USD"))
@@ -50,23 +50,23 @@ object JobTypes {
   }
   type HourlyRate = HourlyRate.Type
 
-  object Created extends Subtype[Instant] {
+  object Created extends Newtype[Instant] {
     implicit val encoder: JsonEncoder[Created] = JsonEncoder[Instant].contramap {
-      (created: Created) => created
+      (created: Created) => unwrap(created)
     }
   }
   type Created = Created.Type
 
-  object JobStatusChanged extends Subtype[Instant] {
+  object JobStatusChanged extends Newtype[Instant] {
     implicit val encoder: JsonEncoder[JobStatusChanged] = JsonEncoder[Instant].contramap {
-      (changed: JobStatusChanged) => changed
+      (changed: JobStatusChanged) => unwrap(changed)
     }
   }
   type JobStatusChanged = JobStatusChanged.Type
 
-  object CompanyName extends Subtype[String] {
+  object CompanyName extends Newtype[String] {
     implicit val encoder: JsonEncoder[CompanyName] = JsonEncoder[String].contramap {
-      (name: CompanyName) => name
+      (name: CompanyName) => unwrap(name)
     }
     def validate(name: String): RequestValidation[CompanyName] =
       if (name.isEmpty) Validation.fail(PostRequestError("Company name must not be empty"))

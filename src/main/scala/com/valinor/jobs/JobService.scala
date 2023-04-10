@@ -6,8 +6,8 @@ import zio._
 import zio.json._
 import zio.http.{Request, Response}
 import zio.prelude.NonEmptyList
-
 import scala.collection.mutable.{Map => MutableMap}
+
 
 class JobService(databaseService: DatabaseService) {
   def createJob(request: Request): IO[PostRequestError, Job] = for {
