@@ -1,6 +1,7 @@
 package com.valinor.jobs
 
 import JobTypes._
+import ErrorTypes._
 import zio._
 import zio.http._
 import zio.http.model.Method
@@ -10,29 +11,36 @@ object JobsApp extends ZIOAppDefault {
   /*
     ZIO HTTP handles each incoming request in its own Fiber out-of-the-box.
     HttpApp is a type alias for Http[-R, +E, Request, Response]
-    curl -i http://localhost:8080/jobs
-    curl -X POST http://localhost:8080/jobs -d '{"title":"Scala Backend Engineer","hourlyRate":18.50,"companyName":"TrueBlue","companySize":1150}'
+    curl -i http://localhost:8080/jobs/Valinor
+    curl -X POST http://localhost:8080/jobs -d '{"title":"Scala Backend Engineer","hourlyRate":18.50,"companyName":"Valinor","companySize":1150}'
   */
   private val route = "jobs"
 
-  private val app: HttpApp[Any, Nothing] = Http.collectZIO[Request] {
+  private val app: HttpApp[JobService, Nothing] = Http.collectZIO[Request] {
 
     case req@ Method.POST -> !! / route => {
       for {
-        createJobRequest <- CreateJobRequest.deserialize(req)
-        job <- Job.createFromRequest(createJobRequest)
+        jobService <- ZIO.service[JobService]
+        job <- jobService.createJob(req)
       } yield Response.text(job.toString)
     } catchAll {
       e: PostRequestError => ZIO.succeed(Response.text(e))
     }
 
-    case Method.GET -> !! / route =>
-      ZIO.succeed {
-        Response.text("Jobs pending")
+    case Method.GET -> !! / route / company => {
+      for {
+        jobService <- ZIO.service[JobService]
+        jobs <- jobService.getJobs(CompanyName(company))
+        response <- jobService.jobsResponse(jobs)
+      } yield response
+    } catchAll {
+      e: GetRequestError => ZIO.succeed {
+        Response.text(e)
       }
+    }
 
     case _ => ZIO.succeed {
-      Response.text("Valinor with ZIO")
+      Response.text("Scala FP with ZIO")
     }
   }
 
@@ -45,6 +53,8 @@ object JobsApp extends ZIOAppDefault {
           Server.live(
             ServerConfig.default // port 8080 by default
           ),
+          JobService.live,
+          DatabaseService.live,
           ZLayer.Debug.mermaid
         )
     } yield ()

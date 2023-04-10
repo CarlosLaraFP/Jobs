@@ -1,6 +1,7 @@
 package com.valinor.jobs
 
 import JobTypes._
+import ErrorTypes._
 import zio.prelude.Validation
 import zio._
 import zio.json._
@@ -56,7 +57,7 @@ object CreateJobRequest {
   Preventing instantiation through constructor or apply methods and preventing .copy => illegal Job instances are unrepresentable
   In Scala 3, case classes with private constructors will have apply and copy methods private automatically.
 */
-sealed abstract case class Job private (
+final case class Job private (
   id: JobId,
   title: JobTitle,
   description: JobDescription,
@@ -89,7 +90,7 @@ object Job {
     companyName: CompanyName,
     companySize: CompanySize,
     hourlyRate: HourlyRate
-  ): Job = new Job(
+  ): Job = Job(
     JobId(UUID.randomUUID),
     jobTitle,
     jobDescription,
@@ -99,7 +100,9 @@ object Job {
     hourlyRate,
     Created(Instant.now),
     JobStatusChanged(Instant.now)
-  ) {}
+  )
+
+  implicit val encoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
 }
 
 sealed trait JobStatus
@@ -107,6 +110,8 @@ object JobStatus {
   case object Created extends JobStatus
   case object Filled extends JobStatus
   case object Completed extends JobStatus
+
+  implicit val encoder: JsonEncoder[JobStatus] = DeriveJsonEncoder.gen[JobStatus]
 }
 
 sealed trait CompanySize
@@ -115,6 +120,8 @@ object CompanySize {
   private case object Medium extends CompanySize
   private case object Large extends CompanySize
   private case object Enterprise extends CompanySize
+
+  implicit val encoder: JsonEncoder[CompanySize] = DeriveJsonEncoder.gen[CompanySize]
 
   private def getCategory(size: Int): CompanySize = size match {
     case a if a < 50 => Small
