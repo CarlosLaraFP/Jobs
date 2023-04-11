@@ -1,32 +1,61 @@
+import com.valinor.jobs.ErrorTypes._
 import com.valinor.jobs._
 import com.valinor.jobs.JobTypes._
-
 import zio._
 import zio.test.TestAspect._
 import zio.test._
-import java.util.UUID
 
 
 object JobSpec extends ZIOSpecDefault {
+  // Property-based tests prioritized
 
-  // TODO: Unit tests
+  private val baseTest = test("Addition associativity PBT") {
+    // 100 examples each generator by default
+    check(Gen.int, Gen.int, Gen.int) { (x, y, z) =>
+      // Statement must be true for all x, y, z
+      assertTrue(
+        ((x + y) + z) == (x + (y + z))
+      )
+    }
+  }
 
-/*
-  val deleteTableTest: Spec[DatabaseService, RequestError] =
-    test("databaseService.modifyTable with Delete") {
-      val effect = for {
-        dbService <- ZIO.service[DatabaseService]
-        mutation = ModifyTable(TableAction.Delete)
-        result <- dbService.modifyTable(mutation)
-      } yield result.result
+  private val jobCreationSuccess = test("Job.createFromRequest success PBT") {
+    // CreateJobRequest apply method with 5 Gens
+    val titleGenerator = Gen.stringBounded(1, 50)(Gen.char)
+    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.char))
+    val rateGenerator = Gen.double(7.26, 300.0)
+    val nameGenerator = Gen.stringBounded(1, 35)(Gen.char)
+    val sizeGenerator = Gen.int(1, 10000)
 
-      assertZIO(effect) {
-        Assertion.assertion("RDS PostgreSQL DB table deleted") {
-          _.contains("success")
-        }
+    check(titleGenerator, descriptionGenerator, rateGenerator, nameGenerator, sizeGenerator) { (title, description, rate, name, size) =>
+      Job.createFromRequest(
+        CreateJobRequest(title, description, rate, name, size)
+      ).map { job: Job =>
+        assertTrue(job.status == JobStatus.Created)
       }
     }
-*/
+  }
+
+  private val jobCreationJobTitleFailure = test("Job.createFromRequest JobTitle failure PBT") {
+    // CreateJobRequest apply method with 5 Gens
+    val titleGenerator = Gen.oneOf(Gen.const(""), Gen.stringBounded(51, 150)(Gen.alphaNumericChar))
+    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.char))
+    val rateGenerator = Gen.double(7.26, 300.0)
+    val nameGenerator = Gen.stringBounded(1, 35)(Gen.char)
+    val sizeGenerator = Gen.int(1, 10000)
+
+    check(titleGenerator, descriptionGenerator, rateGenerator, nameGenerator, sizeGenerator) { (title, description, rate, name, size) =>
+      Job.createFromRequest(
+        CreateJobRequest(title, description, rate, name, size)
+      ).either.map { (r: Either[PostRequestError, Job]) =>
+        assertTrue(
+          r.isLeft && PostRequestError.unwrap(r.left.getOrElse(PostRequestError(""))) == "Job title must be between 1 and 50 characters"
+        )
+      }
+    }
+  }
+
+  // TODO: Unit tests
 
   // TODO: Integration tests
   /*
@@ -36,74 +65,16 @@ object JobSpec extends ZIOSpecDefault {
     This test verifies that all of these interactions with the database service are working as expected.
    */
 
-  // TODO: Property-based tests
-/*
-  val pbtCreateCase: Spec[DatabaseService, RequestError] =
-    test("PBT: databaseService.createCase") {
-
-      val nameGenerator = Gen.stringBounded(1, 99)(Gen.char)
-
-      val dobGenerator = for {
-        year <- Gen.stringN(4)(Gen.numericChar)
-        month <- Gen.fromIterable(1 to 12).map(i => if (i < 10) s"0$i" else s"$i")
-        day <- Gen.fromIterable(1 to 28).map(i => if (i < 10) s"0$i" else s"$i")
-      } yield s"$year-$month-$day"
-
-      val dodGenerator = Gen.option(dobGenerator)
-
-      check(nameGenerator, dobGenerator, dodGenerator) { (name, dob, dod) =>
-        val effect = for {
-          dbService <- ZIO.service[DatabaseService]
-          create = CreateCase(name, dob, dod)
-          result <- dbService.createCase(create)
-        } yield result
-
-        effect.map(m =>
-          assertTrue(
-            m.result.nonEmpty &&
-              m.caseId.nonEmpty &&
-              m.caseStatus.get == CaseStatus.Pending
-          )
-        )
-      }
-    }
-*/
-
-  // TODO: Failure test cases
 
   override def spec =
-    suite("WebsiteSpec")(
-/*
-      suite("DatabaseService ZLayer")(
-        createTableTest,
-        suite("")(
-          caseLifecycleTest,
-          clearTableTest
-        ) @@ nonFlaky(3),
-        pbtCreateCase @@ nonFlaky(3),
-        invalidDateFailure,
-        deleteTableTest
-      ).provide(
-        DatabaseService.live,
-        ZLayer.fromZIO(
-          Hub.unbounded[CaseStatusChanged]
-        ),
-        PostgresTransactor.live(
-        "org.postgresql.Driver",
-        "jdbc:postgresql://localhost:5432/casesdb",
-        "postgres",
-        "postgres"
-        )
-      ) @@ sequential,
-*/
-      test("Property-Based Testing") {
-        // 100 examples each generator by default
-        check(Gen.int, Gen.int, Gen.int) { (x, y, z) =>
-          // Statement must be true for all x, y, z, ...
-          assertTrue(((x + y) + z) == (x + (y + z)))
-        }
-      }
-    ) @@ timed
+    suite("Property-based tests")(
+      baseTest,
+      jobCreationSuccess,
+      jobCreationJobTitleFailure
+    ).provide(
+      JobService.live,
+      DatabaseService.live
+    ) @@ timed @@ samples(200) // @@ sequential
 }
 /*
   TODO: Assertion variants

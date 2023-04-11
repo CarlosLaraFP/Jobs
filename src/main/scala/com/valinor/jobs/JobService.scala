@@ -10,22 +10,33 @@ import scala.collection.mutable.{Map => MutableMap}
 
 
 class JobService(databaseService: DatabaseService) {
-  def createJob(request: Request): IO[PostRequestError, Job] = for {
-    createJobRequest <- CreateJobRequest.deserialize(request)
-    job <- Job.createFromRequest(createJobRequest)
-    _ <- databaseService.storeInMemory(job)
-  } yield job
-
-  def getJobs(companyName: CompanyName): IO[GetRequestError, NonEmptyList[Job]] =
-    ZIO.fromOption {
-      databaseService.jobs.get(companyName)
-    }.mapError { _ =>
-      GetRequestError(s"${CompanyName.unwrap(companyName)} does not have any jobs.")
+  def createJob(request: Request): UIO[Response] = {
+    for {
+      createJobRequest <- CreateJobRequest.deserialize(request)
+      job <- Job.createFromRequest(createJobRequest)
+      _ <- databaseService.storeInMemory(job)
+    } yield Response.text(job.toString)
+  } catchAll { e: PostRequestError =>
+    ZIO.succeed {
+      Response.text(PostRequestError.unwrap(e))
     }
+  }
 
-  def jobsResponse(jobs: NonEmptyList[Job]): UIO[Response] = ZIO.succeed {
-    val jobsJson = jobs.map(_.toJson).mkString(",")
-    Response.text(s"[$jobsJson]")
+  def getJobs(companyName: CompanyName): UIO[Response] = {
+    for {
+      jobs <- ZIO.fromOption {
+        databaseService.jobs.get(companyName)
+      } mapError { _ =>
+        GetRequestError(s"${CompanyName.unwrap(companyName)} does not have any jobs.")
+      }
+      json <- ZIO.succeed {
+        jobs.map(_.toJson).mkString(",")
+      }
+    } yield Response.text(s"[$json]")
+  } catchAll { e: GetRequestError =>
+    ZIO.succeed {
+      Response.text(GetRequestError.unwrap(e))
+    }
   }
 }
 object JobService {
@@ -47,9 +58,7 @@ class DatabaseService {
           case Some(jobs) => job :: jobs
         }
       )
-    }.mapError { t: Throwable =>
-      PostRequestError(t.getMessage)
-    }
+    } mapError { t: Throwable => PostRequestError(t.getMessage) }
 
   // TODO: Implement Doobie
   def storeInPostgres(job: Job): IO[PostRequestError, Unit] = ???

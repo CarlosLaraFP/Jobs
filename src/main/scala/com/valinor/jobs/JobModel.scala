@@ -2,7 +2,7 @@ package com.valinor.jobs
 
 import JobTypes._
 import ErrorTypes._
-import zio.prelude.Validation
+import zio.prelude._
 import zio._
 import zio.json._
 import zio.http.Request
@@ -72,6 +72,8 @@ final case class Job private (
     s"${CompanyName.unwrap(name)} ${status.toString.toLowerCase} ${JobTitle.unwrap(title)} #${JobId.unwrap(id)}"
 }
 object Job {
+  implicit val encoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
+
   // TODO: Property-based tests
   def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
     // Run-time validation with error accumulation
@@ -101,8 +103,6 @@ object Job {
     Created(Instant.now),
     JobStatusChanged(Instant.now)
   )
-
-  implicit val encoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
 }
 
 sealed trait JobStatus

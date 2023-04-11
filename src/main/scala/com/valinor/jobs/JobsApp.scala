@@ -18,24 +18,18 @@ object JobsApp extends ZIOAppDefault {
 
   private val app: HttpApp[JobService, Nothing] = Http.collectZIO[Request] {
 
-    case req@ Method.POST -> !! / route => {
+    case req@ Method.POST -> !! / route =>
       for {
         jobService <- ZIO.service[JobService]
-        job <- jobService.createJob(req)
-      } yield Response.text(job.toString)
-    } catchAll {
-      e: PostRequestError => ZIO.succeed(Response.text(e))
-    }
-
-    case Method.GET -> !! / route / company => {
-      for {
-        jobService <- ZIO.service[JobService]
-        jobs <- jobService.getJobs(CompanyName(company))
-        response <- jobService.jobsResponse(jobs)
+        response <- jobService.createJob(req)
       } yield response
-    } catchAll {
-      e: GetRequestError => ZIO.succeed(Response.text(e))
-    }
+
+
+    case Method.GET -> !! / route / company =>
+      for {
+        jobService <- ZIO.service[JobService]
+        response <- jobService.getJobs(CompanyName(company))
+      } yield response
 
     case _ => ZIO.succeed {
       Response.text("Scala FP with ZIO")

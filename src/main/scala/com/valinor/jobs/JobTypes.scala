@@ -1,6 +1,6 @@
 package com.valinor.jobs
 
-import zio.json.{DeriveJsonEncoder, JsonEncoder}
+import zio.json.JsonEncoder
 import zio.prelude.{Associative, Newtype, Subtype, Validation}
 //import zio.prelude.Assertion._ // for compile-time validation
 import java.time.Instant
@@ -19,14 +19,16 @@ object JobTypes {
 
   object JobTitle extends Newtype[String] {
     implicit val encoder: JsonEncoder[JobTitle] = JsonEncoder[String].contramap { unwrap }
+
     def validate(title: String): RequestValidation[JobTitle] =
-      if (title.isEmpty) Validation.fail(PostRequestError("Job title must not be empty"))
+      if (title.isEmpty || title.length > 50) Validation.fail(PostRequestError("Job title must be between 1 and 50 characters"))
       else Validation.succeed(JobTitle(title))
   }
   type JobTitle = JobTitle.Type
 
   object JobDescription extends Newtype[Option[String]] {
     implicit val encoder: JsonEncoder[JobDescription] = JsonEncoder[Option[String]].contramap { unwrap }
+
     def validate(description: Option[String]): RequestValidation[JobDescription] =
       if (description.nonEmpty && description.get.length > 250)
         Validation.fail(PostRequestError("Job description must not exceed 250 characters"))
@@ -36,6 +38,7 @@ object JobTypes {
 
   object HourlyRate extends Newtype[Double] {
     implicit val encoder: JsonEncoder[HourlyRate] = JsonEncoder[Double].contramap { unwrap }
+
     def validate(rate: Double): RequestValidation[HourlyRate] =
       if (rate <= 7.25) Validation.fail(PostRequestError("Hourly rate must be greater than $7.25 USD"))
       else Validation.succeed(HourlyRate(rate))
@@ -54,6 +57,7 @@ object JobTypes {
 
   object CompanyName extends Newtype[String] {
     implicit val encoder: JsonEncoder[CompanyName] = JsonEncoder[String].contramap { unwrap }
+
     def validate(name: String): RequestValidation[CompanyName] =
       if (name.isEmpty) Validation.fail(PostRequestError("Company name must not be empty"))
       else Validation.succeed(CompanyName(name))
@@ -64,16 +68,16 @@ object JobTypes {
 object ErrorTypes {
   type RequestValidation[T] = Validation[PostRequestError, T]
 
-  object PostRequestError extends Subtype[String] {
+  object PostRequestError extends Newtype[String] {
     implicit val associative: Associative[PostRequestError] =
       new Associative[PostRequestError] {
         def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError = {
-          PostRequestError(s"$left | $right")
+          PostRequestError(s"${unwrap(left)} | ${unwrap(right)}")
         }
       }
   }
   type PostRequestError = PostRequestError.Type
 
-  object GetRequestError extends Subtype[String]
+  object GetRequestError extends Newtype[String]
   type GetRequestError = GetRequestError.Type
 }
