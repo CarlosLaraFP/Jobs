@@ -8,13 +8,13 @@ import zio.http.{Request, Response}
 import zio.prelude.NonEmptyList
 import scala.collection.mutable.{Map => MutableMap}
 
-
-class JobService(databaseService: DatabaseService) {
+// Use JobService trait?
+final case class JobService(jobsRepository: JobsRepository) {
   def createJob(request: Request): UIO[Response] = {
     for {
       createJobRequest <- CreateJobRequest.deserialize(request)
       job <- Job.createFromRequest(createJobRequest)
-      _ <- databaseService.create(job)
+      _ <- jobsRepository.create(job)
     } yield Response.text(job.toString)
   } catchAll { e: PostRequestError =>
     ZIO.succeed {
@@ -24,7 +24,7 @@ class JobService(databaseService: DatabaseService) {
 
   def getJobs(companyName: CompanyName): UIO[Response] = {
     for {
-      jobs <- databaseService.get(companyName)
+      jobs <- jobsRepository.get(companyName)
       json <- ZIO.succeed {
         jobs.map(_.toJson).mkString(",")
       }
@@ -36,25 +36,22 @@ class JobService(databaseService: DatabaseService) {
   }
 }
 object JobService {
-  private[this] def create(databaseService: DatabaseService): JobService = new JobService(databaseService)
-
-  val live: ZLayer[DatabaseService, Throwable, JobService] = ZLayer.fromFunction(create _)
+  val live: ZLayer[JobsRepository, Throwable, JobService] = ZLayer.fromFunction(this.apply _)
 }
 
-class InMemoryDatabase extends DatabaseService {
+final case class InMemoryDatabase private () extends JobsRepository {
   // TODO: TMap for thread safety
   private val jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
 
-  override def create(job: Job): IO[PostRequestError, Unit] =
-    ZIO.attempt {
-      jobs.update(
-        job.name,
-        jobs.get(job.name) match {
-          case None => NonEmptyList(job)
-          case Some(jobs) => job :: jobs
-        }
-      )
-    } mapError { t: Throwable => PostRequestError(t.getMessage) }
+  override def create(job: Job): UIO[Unit] = ZIO.succeed {
+    jobs.update(
+      job.name,
+      jobs.get(job.name) match {
+        case None => NonEmptyList(job)
+        case Some(jobs) => job :: jobs
+      }
+    )
+  }
 
   override def get(companyName: CompanyName): IO[GetRequestError, NonEmptyList[Job]] =
     ZIO.fromOption {
@@ -64,12 +61,10 @@ class InMemoryDatabase extends DatabaseService {
     }
 }
 object InMemoryDatabase {
-  private[this] def create: InMemoryDatabase = new InMemoryDatabase
-
-  val live: ZLayer[Any, Throwable, InMemoryDatabase] = ZLayer.succeed(create)
+  val live: ZLayer[Any, Throwable, InMemoryDatabase] = ZLayer.fromFunction(this.apply _)
 }
 
-class PostgresDatabase extends DatabaseService {
+final case class PostgresDatabase private () extends JobsRepository {
   // TODO: TMap for thread safety
   private val jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
 
@@ -79,7 +74,6 @@ class PostgresDatabase extends DatabaseService {
   override def get(companyName: CompanyName): IO[GetRequestError, NonEmptyList[Job]] = ???
 }
 object PostgresDatabase {
-  private[this] def create: PostgresDatabase = new PostgresDatabase
-
-  val live: ZLayer[Any, Throwable, PostgresDatabase] = ZLayer.succeed(create)
+  // TODO: Add DbConfig dependency
+  val live: ZLayer[Any, Throwable, PostgresDatabase] = ZLayer.fromFunction(this.apply _)
 }

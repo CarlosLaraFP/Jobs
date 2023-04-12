@@ -74,7 +74,6 @@ final case class Job private (
 object Job {
   implicit val encoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
 
-  // TODO: Property-based tests
   def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
     // Run-time validation with error accumulation
     Validation.validateWith(

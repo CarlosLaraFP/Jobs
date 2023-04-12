@@ -7,7 +7,10 @@ import zio.test._
 
 
 object JobSpec extends ZIOSpecDefault {
-  // Property-based tests prioritized
+  /*
+    Methods that need to be tested directly must be public.
+    Property-based tests prioritized (unit, integration).
+   */
 
   private val baseTest = test("Addition associativity") {
     // 100 examples each generator by default
@@ -54,8 +57,6 @@ object JobSpec extends ZIOSpecDefault {
       }
     }
   }
-
-  // TODO: Unit tests
 
   // TODO: Integration tests
   /*
