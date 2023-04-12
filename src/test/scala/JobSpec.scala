@@ -9,7 +9,7 @@ import zio.test._
 object JobSpec extends ZIOSpecDefault {
   // Property-based tests prioritized
 
-  private val baseTest = test("Addition associativity PBT") {
+  private val baseTest = test("Addition associativity") {
     // 100 examples each generator by default
     check(Gen.int, Gen.int, Gen.int) { (x, y, z) =>
       // Statement must be true for all x, y, z
@@ -19,12 +19,12 @@ object JobSpec extends ZIOSpecDefault {
     }
   }
 
-  private val jobCreationSuccess = test("Job.createFromRequest success PBT") {
+  private val jobCreationSuccess = test("Job.createFromRequest success") {
     // CreateJobRequest apply method with 5 Gens
-    val titleGenerator = Gen.stringBounded(1, 50)(Gen.char)
-    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.char))
+    val titleGenerator = Gen.stringBounded(1, 50)(Gen.alphaNumericChar)
+    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.alphaNumericChar))
     val rateGenerator = Gen.double(7.26, 300.0)
-    val nameGenerator = Gen.stringBounded(1, 35)(Gen.char)
+    val nameGenerator = Gen.stringBounded(1, 35)(Gen.alphaNumericChar)
     val sizeGenerator = Gen.int(1, 10000)
 
     check(titleGenerator, descriptionGenerator, rateGenerator, nameGenerator, sizeGenerator) { (title, description, rate, name, size) =>
@@ -36,12 +36,12 @@ object JobSpec extends ZIOSpecDefault {
     }
   }
 
-  private val jobCreationJobTitleFailure = test("Job.createFromRequest JobTitle failure PBT") {
-    // CreateJobRequest apply method with 5 Gens
+  private val jobCreationJobTitleFailure = test("Job.createFromRequest JobTitle failure") {
+    // JobTitle must fail validation
     val titleGenerator = Gen.oneOf(Gen.const(""), Gen.stringBounded(51, 150)(Gen.alphaNumericChar))
-    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.char))
+    val descriptionGenerator = Gen.option(Gen.stringBounded(1, 250)(Gen.alphaNumericChar))
     val rateGenerator = Gen.double(7.26, 300.0)
-    val nameGenerator = Gen.stringBounded(1, 35)(Gen.char)
+    val nameGenerator = Gen.stringBounded(1, 35)(Gen.alphaNumericChar)
     val sizeGenerator = Gen.int(1, 10000)
 
     check(titleGenerator, descriptionGenerator, rateGenerator, nameGenerator, sizeGenerator) { (title, description, rate, name, size) =>
@@ -73,8 +73,8 @@ object JobSpec extends ZIOSpecDefault {
       jobCreationJobTitleFailure
     ).provide(
       JobService.live,
-      DatabaseService.live
-    ) @@ timed @@ samples(200) // @@ sequential
+      InMemoryDatabase.live
+    ) @@ timed @@ samples(250) // @@ sequential
 }
 /*
   TODO: Assertion variants

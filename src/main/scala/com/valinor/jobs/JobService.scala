@@ -14,7 +14,7 @@ class JobService(databaseService: DatabaseService) {
     for {
       createJobRequest <- CreateJobRequest.deserialize(request)
       job <- Job.createFromRequest(createJobRequest)
-      _ <- databaseService.storeInMemory(job)
+      _ <- databaseService.store(job)
     } yield Response.text(job.toString)
   } catchAll { e: PostRequestError =>
     ZIO.succeed {
@@ -45,11 +45,15 @@ object JobService {
   val live: ZLayer[DatabaseService, Throwable, JobService] = ZLayer.fromFunction(create _)
 }
 
-class DatabaseService {
+trait DatabaseService {
+  def store(job: Job): IO[PostRequestError, Unit]
+  def jobs: MutableMap[CompanyName, NonEmptyList[Job]]
+}
+class InMemoryDatabase extends DatabaseService {
   // TODO: TMap for thread safety
-  val jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
+  override def jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
 
-  def storeInMemory(job: Job): IO[PostRequestError, Unit] =
+  override def store(job: Job): IO[PostRequestError, Unit] =
     ZIO.attempt {
       jobs.update(
         job.name,
@@ -63,8 +67,8 @@ class DatabaseService {
   // TODO: Implement Doobie
   def storeInPostgres(job: Job): IO[PostRequestError, Unit] = ???
 }
-object DatabaseService {
-  private def create: DatabaseService = new DatabaseService
+object InMemoryDatabase {
+  private def create: InMemoryDatabase = new InMemoryDatabase
 
-  val live: ZLayer[Any, Throwable, DatabaseService] = ZLayer.succeed(create)
+  val live: ZLayer[Any, Throwable, InMemoryDatabase] = ZLayer.succeed(create)
 }

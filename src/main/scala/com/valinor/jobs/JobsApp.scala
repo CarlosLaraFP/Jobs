@@ -44,7 +44,7 @@ object JobsApp extends ZIOAppDefault {
         .provide(
           Server.live(ServerConfig.default), // port 8080 by default
           JobService.live,
-          DatabaseService.live,
+          InMemoryDatabase.live,
           ZLayer.Debug.mermaid
         )
     } yield ()
