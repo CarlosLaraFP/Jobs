@@ -110,6 +110,7 @@ object JobStatus {
   case object Created extends JobStatus
   case object Filled extends JobStatus
   case object Completed extends JobStatus
+  case object Deleted extends JobStatus
 
   implicit val encoder: JsonEncoder[JobStatus] = DeriveJsonEncoder.gen[JobStatus]
 }
@@ -123,18 +124,14 @@ object CompanySize {
 
   implicit val encoder: JsonEncoder[CompanySize] = DeriveJsonEncoder.gen[CompanySize]
 
-  private def getCategory(size: Int): CompanySize = size match {
+  private[this] def getCategory(size: Int): CompanySize = size match {
     case a if a < 50 => Small
     case b if b > 50 && b < 250 => Medium
     case c if c > 250 && c < 1000 => Large
     case _ => Enterprise
   }
 
-  def validate(size: Int): RequestValidation[CompanySize] =
-    if (size < 0) Validation.fail {
-      PostRequestError("Company size must be greater than zero")
-    }
-    else Validation.succeed {
-      CompanySize.getCategory(size)
-    }
+  private[jobs] def validate(size: Int): RequestValidation[CompanySize] =
+    if (size < 0) Validation.fail { PostRequestError("Company size must be greater than zero") }
+    else Validation.succeed { getCategory(size) }
 }

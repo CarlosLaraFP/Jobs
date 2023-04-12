@@ -20,7 +20,7 @@ object JobTypes {
   object JobTitle extends Newtype[String] {
     implicit val encoder: JsonEncoder[JobTitle] = JsonEncoder[String].contramap { unwrap }
 
-    def validate(title: String): RequestValidation[JobTitle] =
+    private[jobs] def validate(title: String): RequestValidation[JobTitle] =
       if (title.isEmpty || title.length > 50) Validation.fail(PostRequestError("Job title must be between 1 and 50 characters"))
       else Validation.succeed(JobTitle(title))
   }
@@ -29,7 +29,7 @@ object JobTypes {
   object JobDescription extends Newtype[Option[String]] {
     implicit val encoder: JsonEncoder[JobDescription] = JsonEncoder[Option[String]].contramap { unwrap }
 
-    def validate(description: Option[String]): RequestValidation[JobDescription] =
+    private[jobs] def validate(description: Option[String]): RequestValidation[JobDescription] =
       if (description.nonEmpty && description.get.length > 250)
         Validation.fail(PostRequestError("Job description must not exceed 250 characters"))
       else Validation.succeed(JobDescription(description))
@@ -39,7 +39,7 @@ object JobTypes {
   object HourlyRate extends Newtype[Double] {
     implicit val encoder: JsonEncoder[HourlyRate] = JsonEncoder[Double].contramap { unwrap }
 
-    def validate(rate: Double): RequestValidation[HourlyRate] =
+    private[jobs] def validate(rate: Double): RequestValidation[HourlyRate] =
       if (rate <= 7.25) Validation.fail(PostRequestError("Hourly rate must be greater than $7.25 USD"))
       else Validation.succeed(HourlyRate(rate))
   }
@@ -58,7 +58,7 @@ object JobTypes {
   object CompanyName extends Newtype[String] {
     implicit val encoder: JsonEncoder[CompanyName] = JsonEncoder[String].contramap { unwrap }
 
-    def validate(name: String): RequestValidation[CompanyName] =
+    private[jobs] def validate(name: String): RequestValidation[CompanyName] =
       if (name.isEmpty) Validation.fail(PostRequestError("Company name must not be empty"))
       else Validation.succeed(CompanyName(name))
   }

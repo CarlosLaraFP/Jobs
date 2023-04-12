@@ -14,7 +14,7 @@ class JobService(databaseService: DatabaseService) {
     for {
       createJobRequest <- CreateJobRequest.deserialize(request)
       job <- Job.createFromRequest(createJobRequest)
-      _ <- databaseService.store(job)
+      _ <- databaseService.create(job)
     } yield Response.text(job.toString)
   } catchAll { e: PostRequestError =>
     ZIO.succeed {
@@ -24,11 +24,7 @@ class JobService(databaseService: DatabaseService) {
 
   def getJobs(companyName: CompanyName): UIO[Response] = {
     for {
-      jobs <- ZIO.fromOption {
-        databaseService.jobs.get(companyName)
-      } mapError { _ =>
-        GetRequestError(s"${CompanyName.unwrap(companyName)} does not have any jobs.")
-      }
+      jobs <- databaseService.get(companyName)
       json <- ZIO.succeed {
         jobs.map(_.toJson).mkString(",")
       }
@@ -40,20 +36,16 @@ class JobService(databaseService: DatabaseService) {
   }
 }
 object JobService {
-  private def create(databaseService: DatabaseService): JobService = new JobService(databaseService)
+  private[this] def create(databaseService: DatabaseService): JobService = new JobService(databaseService)
 
   val live: ZLayer[DatabaseService, Throwable, JobService] = ZLayer.fromFunction(create _)
 }
 
-trait DatabaseService {
-  def store(job: Job): IO[PostRequestError, Unit]
-  def jobs: MutableMap[CompanyName, NonEmptyList[Job]]
-}
 class InMemoryDatabase extends DatabaseService {
   // TODO: TMap for thread safety
-  override def jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
+  private val jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
 
-  override def store(job: Job): IO[PostRequestError, Unit] =
+  override def create(job: Job): IO[PostRequestError, Unit] =
     ZIO.attempt {
       jobs.update(
         job.name,
@@ -64,11 +56,30 @@ class InMemoryDatabase extends DatabaseService {
       )
     } mapError { t: Throwable => PostRequestError(t.getMessage) }
 
-  // TODO: Implement Doobie
-  def storeInPostgres(job: Job): IO[PostRequestError, Unit] = ???
+  override def get(companyName: CompanyName): IO[GetRequestError, NonEmptyList[Job]] =
+    ZIO.fromOption {
+      jobs.get(companyName)
+    } mapError { _ =>
+      GetRequestError(s"${CompanyName.unwrap(companyName)} does not have any jobs.")
+    }
 }
 object InMemoryDatabase {
-  private def create: InMemoryDatabase = new InMemoryDatabase
+  private[this] def create: InMemoryDatabase = new InMemoryDatabase
 
   val live: ZLayer[Any, Throwable, InMemoryDatabase] = ZLayer.succeed(create)
+}
+
+class PostgresDatabase extends DatabaseService {
+  // TODO: TMap for thread safety
+  private val jobs: MutableMap[CompanyName, NonEmptyList[Job]] = MutableMap.empty
+
+  // TODO: Implement Doobie
+  override def create(job: Job): IO[PostRequestError, Unit] = ???
+
+  override def get(companyName: CompanyName): IO[GetRequestError, NonEmptyList[Job]] = ???
+}
+object PostgresDatabase {
+  private[this] def create: PostgresDatabase = new PostgresDatabase
+
+  val live: ZLayer[Any, Throwable, PostgresDatabase] = ZLayer.succeed(create)
 }
