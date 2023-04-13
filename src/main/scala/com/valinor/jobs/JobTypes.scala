@@ -1,7 +1,8 @@
 package com.valinor.jobs
 
+import ErrorTypes._
 import zio.json.JsonEncoder
-import zio.prelude.{Associative, Newtype, Subtype, Validation}
+import zio.prelude.{Associative, Newtype, Validation}
 //import zio.prelude.Assertion._ // for compile-time validation
 import java.time.Instant
 import java.util.UUID
@@ -10,7 +11,7 @@ import java.util.UUID
   as another type at runtime but is a separate type at compile time.
 */
 object JobTypes {
-  import ErrorTypes._
+  type RequestValidation[T] = Validation[PostRequestError, T]
 
   object JobId extends Newtype[UUID] {
     implicit val encoder: JsonEncoder[JobId] = JsonEncoder[UUID].contramap { unwrap }
@@ -66,15 +67,11 @@ object JobTypes {
 }
 
 object ErrorTypes {
-  type RequestValidation[T] = Validation[PostRequestError, T]
-
   object PostRequestError extends Newtype[String] {
-    implicit val associative: Associative[PostRequestError] =
-      new Associative[PostRequestError] {
-        def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError = {
-          PostRequestError(s"${unwrap(left)} | ${unwrap(right)}")
-        }
-      }
+    implicit val associative: Associative[PostRequestError] = new Associative[PostRequestError] {
+      override def combine(left: => PostRequestError, right: => PostRequestError): PostRequestError =
+        PostRequestError(s"${unwrap(left)} | ${unwrap(right)}")
+    }
   }
   type PostRequestError = PostRequestError.Type
 

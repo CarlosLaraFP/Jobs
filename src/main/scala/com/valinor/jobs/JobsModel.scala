@@ -72,7 +72,7 @@ final case class Job private (
     s"${CompanyName.unwrap(name)} ${status.toString.toLowerCase} ${JobTitle.unwrap(title)} #${JobId.unwrap(id)}"
 }
 object Job {
-  implicit val encoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
+  implicit private[jobs] val jobEncoder: JsonEncoder[Job] = DeriveJsonEncoder.gen[Job]
 
   def createFromRequest(request: CreateJobRequest): IO[PostRequestError, Job] = {
     // Run-time validation with error accumulation

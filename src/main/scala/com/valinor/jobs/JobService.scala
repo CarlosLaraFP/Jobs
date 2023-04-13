@@ -5,17 +5,22 @@ import ErrorTypes._
 import zio._
 import zio.json._
 import zio.http.{Request, Response}
+import zio.http.model.Status
 import zio.prelude.NonEmptyList
+
 import scala.collection.mutable.{Map => MutableMap}
 
 // Use JobService trait?
 final case class JobService(jobsRepository: JobsRepository) {
+  // .refineOrDie is useful for mapping several effect's error channels at once
   def createJob(request: Request): UIO[Response] = {
     for {
       createJobRequest <- CreateJobRequest.deserialize(request)
       job <- Job.createFromRequest(createJobRequest)
       _ <- jobsRepository.create(job)
-    } yield Response.text(job.toString)
+    } yield Response
+      .text(job.toString)
+      .setStatus(Status.Ok)
   } catchAll { e: PostRequestError =>
     ZIO.succeed {
       Response.text(PostRequestError.unwrap(e))
@@ -28,7 +33,9 @@ final case class JobService(jobsRepository: JobsRepository) {
       json <- ZIO.succeed {
         jobs.map(_.toJson).mkString(",")
       }
-    } yield Response.text(s"[$json]")
+    } yield Response
+      .text(s"[$json]")
+      .setStatus(Status.Ok)
   } catchAll { e: GetRequestError =>
     ZIO.succeed {
       Response.text(GetRequestError.unwrap(e))
